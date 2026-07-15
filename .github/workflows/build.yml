@@ -1,0 +1,57 @@
+name: Build (macOS arm64)
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "setup.sh"
+      - "build.sh"
+      - "binding.gyp"
+      - "src/**"
+      - "lib/**"
+      - ".github/workflows/build.yml"
+  pull_request:
+    paths:
+      - "setup.sh"
+      - "build.sh"
+      - "binding.gyp"
+      - "src/**"
+      - "lib/**"
+      - ".github/workflows/build.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest-arm64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile --ignore-scripts
+
+      - name: Upgrade node-gyp
+        run: npm install --no-save node-gyp@12.4.0
+
+      - name: Fetch third-party native dependencies
+        run: bash setup.sh arm64
+
+      - name: Build native library (CMake)
+        run: |
+          rm -rf lib/build lib/install
+          mkdir -p lib/build
+          cd lib/build
+          cmake -DCMAKE_OSX_ARCHITECTURES=arm64 ..
+          cmake --build . --config Release
+          cmake --install . --prefix ../install
+
+      - name: Build native module (node-gyp)
+        run: npm_config_arch=arm64 ./node_modules/.bin/node-gyp rebuild
+
+      - name: Smoke test module loads
+        run: node -e "const sr = require('./src/index.js'); if (typeof sr.SpeechRecorder !== 'function') throw new Error('SpeechRecorder export missing');"
