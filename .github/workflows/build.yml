@@ -41,7 +41,16 @@ jobs:
       - name: Fetch third-party native dependencies
         run: bash setup.sh arm64
 
-      - name: Build native module
+      - name: Build native library (CMake)
+        run: |
+          rm -rf lib/build lib/install
+          mkdir -p lib/build
+          cd lib/build
+          cmake -DCMAKE_OSX_ARCHITECTURES=arm64 ..
+          cmake --build . --config Release
+          cmake --install . --prefix ../install
+
+      - name: Build native module (node-gyp)
         run: npm_config_arch=arm64 ./node_modules/.bin/node-gyp rebuild
 
       - name: Smoke test module loads
