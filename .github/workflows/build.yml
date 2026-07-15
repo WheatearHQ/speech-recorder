@@ -1,0 +1,45 @@
+name: Build (macOS arm64)
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "setup.sh"
+      - "build.sh"
+      - "binding.gyp"
+      - "src/**"
+      - "lib/**"
+      - ".github/workflows/build.yml"
+  pull_request:
+    paths:
+      - "setup.sh"
+      - "build.sh"
+      - "binding.gyp"
+      - "src/**"
+      - "lib/**"
+      - ".github/workflows/build.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest-arm64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile --ignore-scripts
+
+      - name: Fetch third-party native dependencies
+        run: bash setup.sh arm64
+
+      - name: Build native module
+        run: bash build.sh arm64
+
+      - name: Smoke test module loads
+        run: node -e "const sr = require('./src/index.js'); if (typeof sr.SpeechRecorder !== 'function') throw new Error('SpeechRecorder export missing');"
