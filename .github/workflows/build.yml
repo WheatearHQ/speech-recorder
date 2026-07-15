@@ -35,6 +35,9 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile --ignore-scripts
 
+      - name: Upgrade node-gyp
+        run: npm install --no-save node-gyp@latest
+
       - name: Fetch third-party native dependencies
         run: bash setup.sh arm64
 
