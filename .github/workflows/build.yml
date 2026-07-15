@@ -42,7 +42,7 @@ jobs:
         run: bash setup.sh arm64
 
       - name: Build native module
-        run: bash build.sh arm64
+        run: npm_config_arch=arm64 ./node_modules/.bin/node-gyp rebuild
 
       - name: Smoke test module loads
         run: node -e "const sr = require('./src/index.js'); if (typeof sr.SpeechRecorder !== 'function') throw new Error('SpeechRecorder export missing');"
